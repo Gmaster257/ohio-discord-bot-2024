@@ -155,9 +155,14 @@ async def deleteTeam(ctxt):
     - Member is given the team role
     - Send message to team channel
 '''
-@bot.command() # TODO
-async def addMember(ctxt, flags: userFlag):
-    pass
+@bot.command(name='addmember', description='Add a member to your team.') # TODO
+async def addmember(ctxt):
+    #Get the Role object for the Verified role.
+    verified_role = discord.utils.find(lambda role: role.name == 'Verified', ctxt.guild.roles)
+    if verified_role not in ctxt.author.roles:
+        #If the caller of the command is not verified, they cannot use this command.
+        return
+    await ctxt.send(f'{ctxt.author.display_name} has joined teamName!')
 
 '''
 * @requires
