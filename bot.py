@@ -162,6 +162,8 @@ async def addmember(ctxt):
     verified_role = discord.utils.find(lambda role: role.name == 'Verified', ctxt.guild.roles)
     if verified_role not in ctxt.author.roles:
         #If the caller of the command is not verified, they cannot use this command.
+        await ctxt.send("I'm sorry, but you need to be verified to join a team."
+                        + "Use the /verify command to get verified!")
         return
     await ctxt.send(f'{ctxt.author.display_name} has joined teamName!')
 
