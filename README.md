@@ -5,8 +5,14 @@ Instructions on setting up on your machine:
 ```
   python -m venv venv
 ```
+
+Then, Mac:
 ```
   source venv/bin/activate
+```
+Windows: 
+```
+  source venv/Scripts/activate
 ```
 3. inside your virtual environment (should say (venv) at the beginning of your terminal line), run:
 ```

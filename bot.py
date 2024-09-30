@@ -2,13 +2,14 @@ import os
 from dotenv import load_dotenv
 import discord
 from discord.ext import commands
+import data
 
 
 #Load in Bot Key
 load_dotenv()
 
 #Init Bot Settings
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 intents.message_content = True
 intents.members = True
 bot = commands.Bot(command_prefix='/', intents=intents)
@@ -67,7 +68,7 @@ async def verify(Context, flags: emailFlag): #TODO
     email = flags.email
 
     #Search Database for user with matching email
-
+    
     #If user exists, check if discord username exists
 
     # else, respond saying either email not found or discord username doesn't match and to contact administration
@@ -200,7 +201,9 @@ async def renameTeam(ctxt):
 #When the bot is ready, this automatically runs
 @bot.event
 async def on_ready():
+    await bot.tree.sync()
     print(f'Logged in as {bot.user}')
+
 
 
 #Get Bot Token and start running on server
