@@ -157,6 +157,7 @@ async def deleteTeam(ctxt):
     - Send message to team channel
 '''
 @bot.command(name='addmember', description='Add a member to your team.') # TODO
+@commands.has_role('Verified')
 async def addmember(ctxt):
     #Get the Role object for the Verified role.
     verified_role = discord.utils.find(lambda role: role.name == 'Verified', ctxt.guild.roles)
@@ -206,7 +207,14 @@ async def on_ready():
     await bot.tree.sync()
     print(f'Logged in as {bot.user}')
 
-
+@bot.event
+async def on_command_error(ctxt, error):
+    if isinstance(error, commands.errors.CheckFailure):
+        print(f'User {ctxt.author.display_name}', end=' ')
+        print(f'attempted to run the {ctxt.command.name} command', end=' ')
+        print(f'without having the {error.missing_role} role.')
+    else:
+        print(error)
 
 #Get Bot Token and start running on server
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
