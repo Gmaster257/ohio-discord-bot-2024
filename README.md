@@ -5,26 +5,20 @@ Instructions on setting up on your machine:
 ```
   python -m venv venv
 ```
-
 Then, Mac:
-```
+```bash
   source venv/bin/activate
 ```
 Windows: 
-```
+```bash
   source venv/Scripts/activate
 ```
-3. inside your virtual environment (should say (venv) at the beginning of your terminal line), run:
+3. Inside your virtual environment (should say (venv) at the beginning of your terminal line), run the following line to install the dependencies.
+```bash
+  pip install -r requirements.txt
 ```
-  pip install python-dotenv
+4. Finally, to start the bot, run:
+```bash
+  python start.py
 ```
-```
-  pip install discord.py
-```
-4. Finally, to log into the discord bot, run:
-```
-  python bot.py
-```
-  - After running that, it should say "discord.client logging in using static token", and then after a few seconds, "discord.gateway Shard ID None has connected to Gateway (Session ID: ..."
-
 Note: if commands containing ```python``` didn't work for you, try ```python3 ``` instead. 

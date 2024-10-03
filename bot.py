@@ -1,12 +1,10 @@
 import os
-from dotenv import load_dotenv
 import discord
 from discord.ext import commands
 import data
+import config
 
 
-#Load in Bot Key
-load_dotenv()
 
 #Init Bot Settings
 intents = discord.Intents.all()
@@ -18,8 +16,6 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 
 MAX_TEAM_SIZE = 4
 TEAM_FORMATION_TIMEOUT = 60
-TEAM_DATABASE = 'team.sqlite'
-USER_DATABASE = 'user.sqlite'
 
 # --------------------Helper Methods-------------------
 
@@ -29,7 +25,7 @@ USER_DATABASE = 'user.sqlite'
 
 #Retrieves Member username (Can be used for adding members)
 class userFlag(commands.FlagConverter):
-    member: discord.Member = commands.flag(description='The member to ban')
+    member: discord.Member = commands.flag(description='The User being selected')
 
 #Retrieves Email
 class emailFlag(commands.FlagConverter):
@@ -58,27 +54,49 @@ async def greet(ctxt, name: str):
 * @requires 
     - Email entered is in database
     - Discord Username matches the user whose email was entered
+    - User is not already verified (check role)
 * @ensures
     - User gains "verified" role
     - User in database is updated to verified
 '''
-@bot.command()
+@bot.hybrid_command(description="Verify your Discord account for this Event")
 async def verify(Context, flags: emailFlag): #TODO
     username = Context.author
     email = flags.email
 
     #Search Database for user with matching email
     
+    # TODO Replace {email_in_db} with response from data.py if email is in the database or not
+    email_in_db = None
+
+    # if email not registered
+    if not email_in_db:
+        await Context.send(content="You have not registered your email yet. Go to https://hack.osu.edu/hack12/ to register or contact administration.")
+        return
+        
     #If user exists, check if discord username exists
 
-    # else, respond saying either email not found or discord username doesn't match and to contact administration
+    # TODO replace associated_username with repsonse from data.py that gets username given email
+    associated_username = None # something like {data.get_username(email)}
+
+    #username not associated with email
+    if associated_username != username:
+        await Context.send(content="Your Discord username does not match the email provided. Please contact administration.")
+        return
+    
+    # username associated with email and email in db
+    
+    # TODO do stuff here in data.py here to set user as verified
+    await Context.send(content="You have been verified")
+    
     
 '''
 * @requires
-    - User sending command is admin
+    - User sending command is admin (check role)
 * @ensures
     - User gains assigned role
-    - Database is updated accordingly
+    - Database is updated accordingly 
+        (if user doesn't exist, add them will role, if they do exist, update role)
 '''
 @bot.command()
 async def overify(Context, flags: registerFlag):  #TODO
@@ -107,32 +125,7 @@ async def overify(Context, flags: registerFlag):  #TODO
 '''
 @bot.command() #TODO
 async def createTeam(ctxt, *, args: str, flags: teamNameFlag):
-    try:
-        #Split arguments by space into a list of strings
-        split_args = args.split()
-
-        #ensure there are at least 5 elements in the list (1 team name + 4 emails)
-        if len(split_args) < 5:
-            await ctxt.send("You need to provide the team name followed by 4 email addresses.")
-            return
-
-        #get the last 4 elements as emails
-        email1 = split_args[-4]
-        email2 = split_args[-3]
-        email3 = split_args[-2]
-        email4 = split_args[-1]
-        #join everything before the last 4 emails as the team name
-        teamName = " ".join(split_args[:-4])
-        # Insert these 5 variables into the sql database
-        teamDB.execute('INSERT INTO teams VALUES (?,?,?,?,?)', (teamName, email1, email2, email3, email4))
-        teamDB.commit()
-
-        #send success message
-        await ctxt.send(f'{teamName} was successfully registered! Happy hacking!')
-
-    except Exception as e:
-        #Catch any unexpected errors and log them
-        await ctxt.send(f"An error occurred: {e}")
+    pass
 
 '''
 * @requires
@@ -140,7 +133,7 @@ async def createTeam(ctxt, *, args: str, flags: teamNameFlag):
 * @ensures
     - Team is removed from Databse
     - Discord Channels are removed
-    - Rolls are removed from Users
+    - Roles are removed from Users
 '''
 @bot.command() #TODO
 async def deleteTeam(ctxt):
@@ -194,12 +187,6 @@ async def leaveTeam(ctxt):
 async def renameTeam(ctxt):
     pass
 
-    userDB.execute('INSERT INTO users (name) VALUES (?)', (flags.emal))
-    userDB.commit()
-
-    #send success message
-    await ctxt.send(f'Email: {flags.email} was successfully added')
-
 
 #When the bot is ready, this automatically runs
 @bot.event
@@ -207,15 +194,6 @@ async def on_ready():
     await bot.tree.sync()
     print(f'Logged in as {bot.user}')
 
-@bot.event
-async def on_command_error(ctxt, error):
-    if isinstance(error, commands.errors.CheckFailure):
-        print(f'User {ctxt.author.display_name}', end=' ')
-        print(f'attempted to run the {ctxt.command.name} command', end=' ')
-        print(f'without having the {error.missing_role} role.')
-    else:
-        print(error)
 
-#Get Bot Token and start running on server
-DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-bot.run(DISCORD_BOT_TOKEN)
+def start():
+    bot.run(config.discord_token)
