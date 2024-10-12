@@ -109,7 +109,51 @@ async def overify(Context, flags: registerFlag):  #TODO
     #If user exists, check if discord username exists
 
     # else, respond saying either email not found or discord username doesn't match and to contact administration
-    
+
+'''
+Useful method to check if someone is verified
+''' 
+async def check_verified(interaction: discord.Interaction, member: discord.Member = None):
+    if member is None:
+        member = interaction.user  # Default to the user who invoked the command
+
+    # Check all roles in the guild
+    roles = interaction.guild.roles
+
+    # Find the verified role
+    verified_role = discord.utils.get(roles, name='Verified')
+
+    if verified_role in member.roles:
+        return True
+    else:
+        return False
+
+'''Useful Methods for creating text and voice channels'''
+async def create_text_channel(interaction: discord.Interaction, channel_name: str):
+    guild = interaction.guild
+
+    # Check if the channel already exists
+    existing_channel = discord.utils.get(guild.text_channels, name=channel_name)
+    if existing_channel:
+        await interaction.response.send_message(f"Channel '{channel_name}' already exists!")
+        return f"Channel '{channel_name}' already exists!", False  # Indicate failure to create
+
+    # Create the text channel
+    new_channel = await guild.create_text_channel(name=channel_name)
+    return f"Channel '{new_channel.name}' has been created!", True # Indicates success
+
+async def create_voice_channel(interaction: discord.Interaction, channel_name: str):
+    guild = interaction.guild
+
+    # Check if the channel already exists
+    existing_channel = discord.utils.get(guild.voice_channels, name=channel_name)
+    if existing_channel:
+        return f"Voice channel '{channel_name}' already exists!", False
+
+    # Create the voice channel
+    new_channel = await guild.create_voice_channel(name=channel_name)
+    return f"Voice channel '{new_channel.name}' has been created!", True
+'''-------------------------------------------------------------------------------'''
 
 '''
 * @requires 
@@ -123,9 +167,21 @@ async def overify(Context, flags: registerFlag):  #TODO
     - Discord Channels are created
     - User gets role updated
 '''
-@bot.command() #TODO
-async def createTeam(ctxt, *, args: str, flags: teamNameFlag):
-    pass
+@bot.tree.command(name='createteam', description='Create a team')
+async def createteam(
+    interaction: discord.Interaction,
+    teamname: str
+):
+    user = interaction.user
+
+    if (check_verified):
+        # TODO: check if they are in a team using db methods
+        # TODO: check if team already exists using db methods
+        await create_text_channel(interaction, teamname)
+        await create_voice_channel(interaction, teamname)
+        await interaction.response.send_message(f'{teamname} has been created')
+    else:
+        await interaction.response.send_message(f'You are not verified')
 
 '''
 * @requires
@@ -149,17 +205,18 @@ async def deleteTeam(ctxt):
     - Member is given the team role
     - Send message to team channel
 '''
-@bot.command(name='addmember', description='Add a member to your team.') # TODO
-@commands.has_role('Verified')
-async def addmember(ctxt):
-    #Get the Role object for the Verified role.
-    verified_role = discord.utils.find(lambda role: role.name == 'Verified', ctxt.guild.roles)
-    if verified_role not in ctxt.author.roles:
-        #If the caller of the command is not verified, they cannot use this command.
-        await ctxt.send("I'm sorry, but you need to be verified to join a team."
-                        + "Use the /verify command to get verified!")
-        return
-    await ctxt.send(f'{ctxt.author.display_name} has joined teamName!')
+@bot.tree.command(name='addmember', description='Add a member to your team')
+async def addmember(
+    interaction: discord.Interaction,
+    member: discord.Member # only allow people in server to be selected
+):
+    user = interaction.user
+
+    # TODO: check if user is in team using db methods
+    # TODO: check what team user is in using db methods
+    teamName = None
+    # TODO: add user to team using db methods
+    await interaction.response.send_message(f'{member} has been added to team {teamName} by {user.display_name}')
 
 '''
 * @requires
