@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import json
+import logging
 
 _DATABASE_FILE = 'records.db'
 
@@ -58,6 +59,7 @@ _TEAM_TABLE_NAME = 'teams'
 _CHANNEL_TABLE_NAME = 'channels'
 _CODE_TABLE_NAME = 'codes'
 
+db_logger = logging.getLogger('records')
 
 def _initialize_db(cursor: sqlite3.Cursor):
 
@@ -71,6 +73,7 @@ def _initialize_db(cursor: sqlite3.Cursor):
             discord_id INTEGER
             )
         """)
+    db_logger.info(f'`{_REG_RESPONSES_TABLE_NAME}` table created sucessfully')
 
     # Table for registrant/user data
     cursor.execute(
@@ -86,6 +89,8 @@ def _initialize_db(cursor: sqlite3.Cursor):
             job_title TEXT
             )
         """)
+    db_logger.info(f'`{_REG_RESPONSES_TABLE_NAME}` table created sucessfully')
+
 
     # Verified users
     cursor.execute(
@@ -96,6 +101,8 @@ def _initialize_db(cursor: sqlite3.Cursor):
             username TEXT UNIQUE NOT NULL
             )
         """)
+    db_logger.info(f'`{_VERIFIED_TABLE_NAME}` table created sucessfully')
+
 
     # Teams
     cursor.execute(
@@ -105,6 +112,8 @@ def _initialize_db(cursor: sqlite3.Cursor):
             role INTEGER UNIQUE NOT NULL
             )
         """)
+    db_logger.info(f'`{_TEAM_TABLE_NAME}` table created sucessfully')
+
 
     # Channels
     cursor.execute(
@@ -114,6 +123,8 @@ def _initialize_db(cursor: sqlite3.Cursor):
             type TEXT NOT NULL
             )
         """)
+    db_logger.info(f'`{_CHANNEL_TABLE_NAME}` table created sucessfully')
+
 
     # Verification Codes
     cursor.execute(
@@ -122,6 +133,8 @@ def _initialize_db(cursor: sqlite3.Cursor):
             value INTEGER NOT NULL
             )
         """)
+    db_logger.info(f'`{_CODE_TABLE_NAME}` table created sucessfully')
+
     
 
 # ---------- Register Data into Database ------------------------------------------------------------ DONE
@@ -130,7 +143,7 @@ def add_registered_user(email: str, roles: list, data: dict):
    
     #Check if user is not verified
     if verified_email_exists(email):
-        print(f"The email ({email}) is already verified. Registered user is not added")
+        db_logger.warning(f"The email ({email}) is already verified. Registered user is not added")
         return
 
     #Check if user with that email already registerd and remove it
@@ -151,6 +164,7 @@ def add_registered_user(email: str, roles: list, data: dict):
         + ' VALUES (?, ?, ?, ?)',
         (email, is_participant, is_judge, is_mentor)
     )
+    
 
 def add_user_data(email: str, data: dict):
 
@@ -314,9 +328,8 @@ def get_team(team_id: int) -> dict:
         'name': data_tuple[1],
         'channels': json.loads(data_tuple[2])
     }
-
-
     return data
+
 
 
 # -------------- Check if entry exists ----------------------------------------------------------------------- DONE
@@ -472,6 +485,21 @@ def update_channels(team_id: int, channels: list):
         'channels': channels_text,
         'team_id': team_id
     })
+
+def get_team_channels(team_id: int) -> dict:
+    return get_team(team_id)['channels']
+
+def get_team_role_id(team_id: int) -> int:
+    return get_team(team_id)['channels']['role']
+
+def get_team_text_channel_id(team_id: int) -> int:
+    return get_team(team_id)['channels']['text']
+
+def get_team_voice_channel_id(team_id: int) -> int:
+    return get_team(team_id)['channels']['voice']
+
+def get_team_category_channel_id(team_id: int) -> int:
+    return get_team(team_id)['channels']['category']
 
 # ----------- Verification Code Methods ----------------------------------------------------------------------
 

@@ -448,6 +448,7 @@ async def createteam(ctxt, flags: teamNameFlag): #TESTED
     if not records.verified_user_exists(user.id):
         await ctxt.send(ephemeral=True,
                         content="You are not verified! Please verify yourself with the /verify command")
+        return
 
     # Check that user is not in another team
     if records.is_member_on_team(user.id):
@@ -484,15 +485,11 @@ async def createteam(ctxt, flags: teamNameFlag): #TESTED
     text_channel = await category_channel.create_text_channel(f"{team_name.replace(' ','-')}-text") # Inherit perms from Category
     voice_channel = await category_channel.create_voice_channel(f"{team_name.replace(' ','-')}-voice", overwrites=voice_channel_perms)
 
-    # Create Team in Database
-    channels = {
-        'category': category_channel.id,
-        'text': text_channel.id,
-        'voice': voice_channel.id,
-        'role': team_role.id
-    }
-
-    team_id = records.create_team(team_name, channels)
+    # Create Team and Channels in Database
+    team_id = records.create_team(team_name, team_role.id)
+    records.add_channel(category_channel.id, team_id, 'category')
+    records.add_channel(text_channel.id, team_id, 'text')
+    records.add_channel(voice_channel.id, team_id, 'voice')
     records.join_team(team_id, user.id) # Add user to team
 
     # Assign role to user and send confirmation message

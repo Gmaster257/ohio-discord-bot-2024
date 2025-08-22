@@ -11,4 +11,4 @@ alter_records.py
 *.csv
 .*
 !.gitignore
-
+*.log
