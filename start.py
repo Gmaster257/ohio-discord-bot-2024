@@ -1,6 +1,6 @@
 import multiprocessing
-import bot
-import web
+import core.bot as bot
+import utils.web as web
 
 #If file is ran
 if __name__ == "__main__":
