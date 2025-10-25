@@ -1,4 +1,5 @@
 # import os
+import io
 import records
 import config
 # import web
@@ -185,6 +186,55 @@ async def handle_permission_error(ctxt: discord.Interaction, error: discord.erro
 
 #-------------------"/" Command Methods-----------------------------
 
+@bot.tree.command(description="Get all team IDs")
+@commands.has_role(config.discord_organizer_role_id)
+async def getteams(interaction):
+    teams = records.get_all_team_ids()
+    await interaction.response.send_message(ephemeral=True, content=f'Team IDs: {teams}')
+
+@bot.tree.command(description="Preview messages to be sent to teams")
+@commands.has_role(config.discord_organizer_role_id)
+async def previewmessages(interaction):
+    with open('send_messages.csv', 'r') as file:
+        content = file.read()
+        # csv in format of team_id,message
+        # print content in format of sending to team_id: message
+        messages = content.split('\n')
+        preview = ""
+        for line in messages[1:]:
+            if line.strip() == "":
+                continue
+            team_id, message = line.split(',', 1)
+            preview += f'To Team {team_id}:\n{message.replace("\\n", "\n")}\n\n'
+        file = discord.File(io.StringIO(preview), filename="messages_preview.txt")
+        await interaction.response.send_message(ephemeral=True, content="The message was too long, so here it is as a file:", file=file)
+
+@bot.tree.command(description="Send messages to teams from CSV file")
+@commands.has_role(config.discord_organizer_role_id)
+async def sendmessages(interaction):
+    guild = interaction.guild
+    with open('send_messages.csv', 'r') as file:
+        content = file.read()
+        messages = content.split('\n')
+        for line in messages[1:]:
+            if line.strip() == "":
+                continue
+            team_id, message = line.split(',', 1)
+            # get team text channel
+            team_id_int = int(team_id)
+            if not records.team_exists(team_id_int):
+                continue
+            channels = records.get_channels_for_team(team_id_int)
+            team_role_id = records.get_team(team_id_int)['role']
+            team_role = interaction.guild.get_role(team_role_id)
+            # Prepend team role mention to message
+            message = f'{team_role.mention}\n\n' + message
+            text_channel_id = channels['text']
+            text_channel = guild.get_channel(text_channel_id)
+            if text_channel:
+                await text_channel.send(content=message.replace('\\n', '\n'))
+    await interaction.response.send_message(ephemeral=True, content='Messages sent to teams.')
+
 #Test Greet Command - Anyone can run
 @bot.tree.command(description="Recieve a random affirmation for encouragement")
 async def affirm(ctxt): # TESTED
@@ -314,7 +364,7 @@ async def verify(ctxt, email_or_code: str): #TESTED
         # add code to verification codes and send message
         records.add_code(CODE, user.id)
         await ctxt.send(ephemeral=True,
-                        content=f"Check your inbox for an email from `<{config.email_address}>` with a verification link. Please check your email and enter the code in this format \n `/verify (code)`")
+                        content=f"Check your inbox for an email from `<{config.email_address}>` with a verification link. Please check your email and enter the code in this format \n `/verify <code>` to complete your verification. \n\n If you do not see the email within a few minutes, please check your spam/junk folder.")
     else:
         await ctxt.send(ephemeral=True,
                         content="Failed to send verification email. Please contact an organizer for assistance.")

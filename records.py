@@ -469,6 +469,11 @@ def get_user_team_id(discord_id: int) -> int:
 def get_team_id(team_name: str) -> int:
     return cursor.execute(f"SELECT id FROM {_TEAM_TABLE_NAME} WHERE name=:team_name", {'team_name': team_name}).fetchone()[0]
 
+def get_all_team_ids() -> list:
+    cursor.execute(f'SELECT id FROM {_TEAM_TABLE_NAME}')
+    team_ids = cursor.fetchall()
+    return [team_id[0] for team_id in team_ids]
+
 def get_team_members(team_id: int) -> list:
     cursor.execute(f'SELECT discord_id FROM {_VERIFIED_TABLE_NAME} WHERE team_id=:team_id', {'team_id': team_id})
     members = cursor.fetchall()
